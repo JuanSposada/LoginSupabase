@@ -93,6 +93,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { supabase } from '@/lib/supabaseClient'
 
 const router = useRouter()
 const { login } = useAuth()
@@ -148,24 +149,13 @@ async function handleLogin() {
   isLoading.value = true
 
   try {
-    // Simulamos una llamada a API con un delay
-    await new Promise(resolve => setTimeout(resolve, 1200))
+    
+    await login(form.email, form.password)
 
-    // Credenciales de prueba
-    const FAKE_USER = { email: 'admin@vue.com', password: 'vue1234' }
-
-    if (form.email === FAKE_USER.email && form.password === FAKE_USER.password) {
-      // Login exitoso
-      login(
-        { name: 'Admin', email: form.email },
-        'fake-jwt-token-abc123'
-      )
-      await router.push('/dashboard')
-    } else {
-      errorMsg.value = 'Credenciales incorrectas. Intenta de nuevo.'
-    }
-  } finally {
-    isLoading.value = false
+    router.push('/dashboard')
+  } catch (error) {
+    console.error("Error Completo: ", error)
+    errorMsg.value = 'Correo o contraseña incorrectos'
   }
 }
 </script>
