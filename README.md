@@ -35,6 +35,33 @@ Este proyecto elimina la necesidad de gestionar tokens manualmente en bases de d
 * **Validación Stateless:** Cada vez que el usuario intenta acceder a un dato, el token se envía en las cabeceras (headers) de forma automática.
 * **Ciclo de Vida:** El sistema incluye una función `checkUserSession` que valida la vigencia del token al refrescar la página, manteniendo al usuario conectado sin re-autenticación.
 
+## 🔐 Módulo de Autenticación: Registro de Usuarios
+
+El sistema de registro utiliza **Supabase Auth** para la gestión de identidades y **Vue.js 3 (Composition API)** para la interfaz de usuario. 
+
+### 4. Flujo de Registro
+1. **Captura de Datos**: El usuario ingresa su Nombre, Email y Contraseña.
+2. **Validación en Tiempo Real**: 
+   - El formulario verifica la fortaleza de la contraseña y el formato del email antes de permitir el envío.
+   - Se muestra una barra de progreso visual basada en la completitud de los campos.
+3. **Persistencia en Supabase**:
+   - Los datos se envían a través del método `auth.signUp`.
+   - El nombre completo se almacena en los `user_metadata` para su persistencia.
+4. **Redirección**: Tras un registro exitoso, se activa un contador de 3 segundos y se redirige automáticamente al `/dashboard`.
+
+### 🛠️ Implementación Técnica
+
+#### Componente: `RegisterView.vue`
+El componente maneja estados reactivos para errores y estados de carga (`isLoading`). Utiliza el composable `useAuth` para desacoplar la lógica de negocio de la vista.
+
+```javascript
+// Ejemplo de llamada al servicio desde la vista
+const result = await register(form.name, form.email, form.password);
+
+if (result.ok) {
+  success.value = true;
+  // Inicia cuenta regresiva para redirección
+}
 ---
 
 ## 📂 Estructura del Código de Autenticación
