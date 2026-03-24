@@ -18,6 +18,7 @@
           <RouterLink to="/login" class="nav-link nav-link--cta">
             Iniciar sesión
           </RouterLink>
+           <RouterLink to="/register" class="nav-link">Registrarse</RouterLink>
         </template>
 
         <!-- Si SÍ está autenticado -->
@@ -60,8 +61,9 @@ const router = useRouter()
 const { isAuthenticated, user, logout } = useAuth()
 
 async function handleLogout() {
-  logout()
+  await logout()
   await router.push('/login')
+  
 }
 </script>
 

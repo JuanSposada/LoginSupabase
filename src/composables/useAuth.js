@@ -11,6 +11,26 @@ export function useAuth() {
 
   const user = computed(() => _user.value)
 
+  async function register(name, email, password){
+    const {data, error} = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name
+        }
+      }
+    })
+    if (error) {
+      return { ok:false, error:error.message }
+    }
+
+    _user.value = data.user
+    _session.value = data.session
+    
+    return {ok: true, data}
+  }
+
   async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -31,10 +51,19 @@ export function useAuth() {
     
   }
 
+  async function checkUserSssion(){
+    const { data } = await supabase.auth.getSession()
+    if (data.session) {
+      _session.value = data.session
+      _user.value = data.session.user
+    }
+  }
+
   return {
     user,
     isAuthenticated,
     login,
     logout,
+    register
   }
 }

@@ -67,12 +67,6 @@
           <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
         </div>
 
-        <!-- Credenciales de prueba -->
-        <div class="hint-box">
-          <span class="hint-label">Credenciales de prueba:</span>
-          <code>admin@vue.com</code> / <code>vue1234</code>
-        </div>
-
         <!-- Botón submit -->
         <button
           type="submit"
@@ -143,10 +137,10 @@ function isFormValid() {
 // ── Login simulado ──
 async function handleLogin() {
   errorMsg.value = ''
-
+  
   if (!isFormValid()) return
-
   isLoading.value = true
+  
 
   try {
     
@@ -156,6 +150,8 @@ async function handleLogin() {
   } catch (error) {
     console.error("Error Completo: ", error)
     errorMsg.value = 'Correo o contraseña incorrectos'
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
