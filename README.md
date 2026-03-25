@@ -62,6 +62,7 @@ if (result.ok) {
   success.value = true;
   // Inicia cuenta regresiva para redirección
 }
+```
 ---
 
 ## 📂 Estructura del Código de Autenticación
