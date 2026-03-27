@@ -56,7 +56,11 @@ const routes = [
   {
   path: '/update-password',
   name: 'UpdatePassword',
-  component: () => import('../views/UpdatePasswordView.vue')
+  component: () => import('../views/UpdatePasswordView.vue'),
+  meta: {
+    title: 'Actualizar contraseña',
+    requiresAuth: true // 🔒 Necesitas la sesión del link para actualizar
+  }
 },
   {
     // Catch-all: cualquier ruta no definida → 404
