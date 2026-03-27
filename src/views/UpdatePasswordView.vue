@@ -1,65 +1,38 @@
-<!-- src/views/LoginView.vue -->
 <template>
   <div class="login-page">
-    <!-- Fondo decorativo -->
     <div class="bg-grid" aria-hidden="true"></div>
     <div class="bg-glow" aria-hidden="true"></div>
 
     <div class="login-card">
-      <!-- Encabezado -->
       <div class="card-header">
-        <span class="card-icon">⬡</span>
-        <h1 class="card-title">Bienvenido</h1>
-        <p class="card-subtitle">Ingresa tus credenciales para continuar</p>
+        <span class="card-icon">🔐</span>
+        <h1 class="card-title">Nueva Contraseña</h1>
+        <p class="card-subtitle">Establece tu nueva clave de acceso de forma segura</p>
       </div>
 
-      <!-- Alerta de error -->
       <Transition name="alert">
         <div v-if="errorMsg" class="alert-error" role="alert">
           <span>⚠</span> {{ errorMsg }}
         </div>
       </Transition>
 
-      <!-- Formulario -->
-      <form class="login-form" @submit.prevent="handleLogin" novalidate>
-
-        <!-- Campo email -->
-        <div class="field" :class="{ 'field--error': errors.email }">
-          <label for="email" class="field-label">Correo electrónico</label>
-          <div class="field-input-wrap">
-            <span class="field-icon">✉</span>
-            <input
-              id="email"
-              v-model.trim="form.email"
-              type="email"
-              class="field-input"
-              placeholder="usuario@ejemplo.com"
-              autocomplete="email"
-              @blur="validateEmail"
-            />
-          </div>
-          <span v-if="errors.email" class="field-error">{{ errors.email }}</span>
-        </div>
-
-        <!-- Campo contraseña -->
+      <form class="login-form" @submit.prevent="handleUpdate" novalidate>
+        
         <div class="field" :class="{ 'field--error': errors.password }">
-          <label for="password" class="field-label">Contraseña</label>
+          <label class="field-label">Nueva Contraseña</label>
           <div class="field-input-wrap">
             <span class="field-icon">🔑</span>
             <input
-              id="password"
-              v-model="form.password"
+              v-model="password"
               :type="showPassword ? 'text' : 'password'"
               class="field-input"
-              placeholder="••••••••"
-              autocomplete="current-password"
+              placeholder="Mínimo 6 caracteres"
               @blur="validatePassword"
             />
             <button
               type="button"
               class="field-toggle"
               @click="showPassword = !showPassword"
-              :aria-label="showPassword ? 'Ocultar contraseña' : 'Ver contraseña'"
             >
               {{ showPassword ? '🙈' : '👁' }}
             </button>
@@ -67,95 +40,94 @@
           <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
         </div>
 
-        <!-- Botón submit -->
+        <div class="field" :class="{ 'field--error': errors.confirm }">
+          <label class="field-label">Confirmar Contraseña</label>
+          <div class="field-input-wrap">
+            <span class="field-icon">🔄</span>
+            <input
+              v-model="confirmPassword"
+              :type="showPassword ? 'text' : 'password'"
+              class="field-input"
+              placeholder="Repite tu contraseña"
+              @blur="validateConfirm"
+            />
+          </div>
+          <span v-if="errors.confirm" class="field-error">{{ errors.confirm }}</span>
+        </div>
+
         <button
           type="submit"
           class="btn-submit"
           :disabled="isLoading"
           :class="{ 'btn-submit--loading': isLoading }"
         >
-          <span v-if="!isLoading">Iniciar sesión →</span>
+          <span v-if="!isLoading">Actualizar contraseña →</span>
           <span v-else class="spinner"></span>
         </button>
-
       </form>
-      <div class="field-options">
-  <router-link to="/forgot-password" class="forgot-link">
-    ¿Olvidaste tu contraseña?
-  </router-link>
-</div>
     </div>
-    
   </div>
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
 import { supabase } from '@/lib/supabaseClient'
 
 const router = useRouter()
-const { login } = useAuth()
-
-// ── Estado del formulario ──
-const form = reactive({
-  email: '',
-  password: '',
-})
-
-const errors = reactive({
-  email: '',
-  password: '',
-})
-
+const password = ref('')
+const confirmPassword = ref('')
 const showPassword = ref(false)
 const isLoading = ref(false)
 const errorMsg = ref('')
 
-// ── Validaciones individuales ──
-function validateEmail() {
-  if (!form.email) {
-    errors.email = 'El correo es obligatorio.'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-    errors.email = 'Ingresa un correo válido.'
-  } else {
-    errors.email = ''
-  }
-}
+const errors = reactive({
+  password: '',
+  confirm: ''
+})
 
 function validatePassword() {
-  if (!form.password) {
+  if (!password.value) {
     errors.password = 'La contraseña es obligatoria.'
-  } else if (form.password.length < 6) {
+  } else if (password.value.length < 6) {
     errors.password = 'Mínimo 6 caracteres.'
   } else {
     errors.password = ''
   }
 }
 
-function isFormValid() {
-  validateEmail()
-  validatePassword()
-  return !errors.email && !errors.password
+function validateConfirm() {
+  if (password.value !== confirmPassword.value) {
+    errors.confirm = 'Las contraseñas no coinciden.'
+  } else {
+    errors.confirm = ''
+  }
 }
 
-// ── Login simulado ──
-async function handleLogin() {
-  errorMsg.value = ''
-  
-  if (!isFormValid()) return
+async function handleUpdate() {
+  validatePassword()
+  validateConfirm()
+
+  if (errors.password || errors.confirm) return
+
   isLoading.value = true
-  
+  errorMsg.value = ''
 
   try {
-    
-    await login(form.email, form.password)
+    // Aquí es donde sucede la magia con Supabase
+    const { error } = await supabase.auth.updateUser({
+      password: password.value
+    })
 
-    router.push('/dashboard')
+    if (error) throw error
+
+    // Si todo sale bien, mandamos al login
+    alert('¡Tu contraseña ha sido actualizada!')
+    router.push('/login')
+    
   } catch (error) {
-    console.error("Error Completo: ", error)
-    errorMsg.value = 'Correo o contraseña incorrectos'
+    console.error(error)
+    errorMsg.value = 'El enlace ha expirado o es inválido. Solicita uno nuevo.'
   } finally {
     isLoading.value = false
   }
@@ -163,6 +135,18 @@ async function handleLogin() {
 </script>
 
 <style scoped>
+/* Reutiliza exactamente los estilos de tu LoginView.vue */
+/* Asegúrate de incluir .login-page, .bg-grid, .login-card, etc. */
+
+.field-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  opacity: 0.6;
+}
 
 /* ── OPCIONES ADICIONALES (Debajo del campo password) ── */
 .field-options {

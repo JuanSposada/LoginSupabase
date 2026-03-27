@@ -49,6 +49,16 @@ const routes = [
     },
   },
   {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('@/views/ForgotPasswordView.vue'),
+  },
+  {
+  path: '/update-password',
+  name: 'UpdatePassword',
+  component: () => import('../views/UpdatePasswordView.vue')
+},
+  {
     // Catch-all: cualquier ruta no definida → 404
     path: '/:pathMatch(.*)*',
     name: 'not-found',

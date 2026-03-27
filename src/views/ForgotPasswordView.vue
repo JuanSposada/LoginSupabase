@@ -1,161 +1,103 @@
-<!-- src/views/LoginView.vue -->
 <template>
   <div class="login-page">
-    <!-- Fondo decorativo -->
     <div class="bg-grid" aria-hidden="true"></div>
     <div class="bg-glow" aria-hidden="true"></div>
 
     <div class="login-card">
-      <!-- Encabezado -->
       <div class="card-header">
-        <span class="card-icon">⬡</span>
-        <h1 class="card-title">Bienvenido</h1>
-        <p class="card-subtitle">Ingresa tus credenciales para continuar</p>
+        <span class="card-icon">🔑</span>
+        <h1 class="card-title">Recuperar Acceso</h1>
+        <p class="card-subtitle">Enviaremos un enlace a tu correo para restablecer tu contraseña</p>
       </div>
 
-      <!-- Alerta de error -->
       <Transition name="alert">
         <div v-if="errorMsg" class="alert-error" role="alert">
           <span>⚠</span> {{ errorMsg }}
         </div>
       </Transition>
 
-      <!-- Formulario -->
-      <form class="login-form" @submit.prevent="handleLogin" novalidate>
+      <Transition name="alert">
+        <div v-if="successMsg" class="alert-success" role="alert">
+          <span>✉</span> {{ successMsg }}
+        </div>
+      </Transition>
 
-        <!-- Campo email -->
+      <form class="login-form" @submit.prevent="handleReset" novalidate>
+        
         <div class="field" :class="{ 'field--error': errors.email }">
           <label for="email" class="field-label">Correo electrónico</label>
           <div class="field-input-wrap">
             <span class="field-icon">✉</span>
             <input
               id="email"
-              v-model.trim="form.email"
+              v-model.trim="email"
               type="email"
               class="field-input"
               placeholder="usuario@ejemplo.com"
-              autocomplete="email"
               @blur="validateEmail"
             />
           </div>
           <span v-if="errors.email" class="field-error">{{ errors.email }}</span>
         </div>
 
-        <!-- Campo contraseña -->
-        <div class="field" :class="{ 'field--error': errors.password }">
-          <label for="password" class="field-label">Contraseña</label>
-          <div class="field-input-wrap">
-            <span class="field-icon">🔑</span>
-            <input
-              id="password"
-              v-model="form.password"
-              :type="showPassword ? 'text' : 'password'"
-              class="field-input"
-              placeholder="••••••••"
-              autocomplete="current-password"
-              @blur="validatePassword"
-            />
-            <button
-              type="button"
-              class="field-toggle"
-              @click="showPassword = !showPassword"
-              :aria-label="showPassword ? 'Ocultar contraseña' : 'Ver contraseña'"
-            >
-              {{ showPassword ? '🙈' : '👁' }}
-            </button>
-          </div>
-          <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
-        </div>
-
-        <!-- Botón submit -->
         <button
           type="submit"
           class="btn-submit"
-          :disabled="isLoading"
+          :disabled="isLoading || successMsg.length > 0"
           :class="{ 'btn-submit--loading': isLoading }"
         >
-          <span v-if="!isLoading">Iniciar sesión →</span>
+          <span v-if="!isLoading">Enviar enlace →</span>
           <span v-else class="spinner"></span>
         </button>
 
+        <router-link to="/login" class="link-back">
+          ← Volver al inicio de sesión
+        </router-link>
       </form>
-      <div class="field-options">
-  <router-link to="/forgot-password" class="forgot-link">
-    ¿Olvidaste tu contraseña?
-  </router-link>
-</div>
     </div>
-    
   </div>
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
 import { supabase } from '@/lib/supabaseClient'
 
-const router = useRouter()
-const { login } = useAuth()
-
-// ── Estado del formulario ──
-const form = reactive({
-  email: '',
-  password: '',
-})
-
-const errors = reactive({
-  email: '',
-  password: '',
-})
-
-const showPassword = ref(false)
+const email = ref('')
 const isLoading = ref(false)
 const errorMsg = ref('')
+const successMsg = ref('')
+const errors = reactive({ email: '' })
 
-// ── Validaciones individuales ──
 function validateEmail() {
-  if (!form.email) {
+  if (!email.value) {
     errors.email = 'El correo es obligatorio.'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
     errors.email = 'Ingresa un correo válido.'
   } else {
     errors.email = ''
   }
 }
 
-function validatePassword() {
-  if (!form.password) {
-    errors.password = 'La contraseña es obligatoria.'
-  } else if (form.password.length < 6) {
-    errors.password = 'Mínimo 6 caracteres.'
-  } else {
-    errors.password = ''
-  }
-}
-
-function isFormValid() {
+async function handleReset() {
   validateEmail()
-  validatePassword()
-  return !errors.email && !errors.password
-}
+  if (errors.email) return
 
-// ── Login simulado ──
-async function handleLogin() {
-  errorMsg.value = ''
-  
-  if (!isFormValid()) return
   isLoading.value = true
-  
+  errorMsg.value = ''
+  successMsg.value = ''
 
   try {
-    
-    await login(form.email, form.password)
+    const { error } = await supabase.auth.resetPasswordForEmail(email.value, {
+      // Esta es la URL a la que el usuario volverá para poner su nueva clave
+      redirectTo: `${window.location.origin}/update-password`,
+    })
 
-    router.push('/dashboard')
+    if (error) throw error
+
+    successMsg.value = '¡Enlace enviado! Revisa tu bandeja de entrada.'
   } catch (error) {
-    console.error("Error Completo: ", error)
-    errorMsg.value = 'Correo o contraseña incorrectos'
+    console.error(error)
+    errorMsg.value = 'No pudimos enviar el correo. Intenta de nuevo.'
   } finally {
     isLoading.value = false
   }
@@ -164,28 +106,34 @@ async function handleLogin() {
 
 <style scoped>
 
-/* ── OPCIONES ADICIONALES (Debajo del campo password) ── */
-.field-options {
+
+.alert-success {
+  background: rgba(112, 224, 150, 0.1);
+  border: 1px solid rgba(112, 224, 150, 0.3);
+  color: #70e096;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.88rem;
+  margin-bottom: 1.25rem;
   display: flex;
-  justify-content: center;
-  /* Eliminamos el margen negativo que causaba que se encimara */
-  margin-top: 1rem; 
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.forgot-link {
-  font-size: 0.75rem;
-  color: #9a938c;
+.link-back {
+  text-align: center;
+  color: #6b6560;
+  font-size: 0.85rem;
   text-decoration: none;
-  transition: color 0.2s ease;
-  font-weight: 700;
+  margin-top: 1rem;
+  transition: color 0.2s;
 }
 
-.forgot-link:hover {
+.link-back:hover {
   color: #c8a96e;
-  text-decoration: underline; /* Un toque sutil para indicar que es un link */
 }
-/* ── PÁGINA ── */
 
+/* ── PÁGINA ── */
 .login-page {
   min-height: calc(100vh - 65px);
   display: flex;
@@ -430,7 +378,6 @@ code {
   animation: spin 0.7s linear infinite;
   vertical-align: middle;
 }
-
 
 @keyframes spin {
   to { transform: rotate(360deg); }
