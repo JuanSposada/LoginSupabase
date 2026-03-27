@@ -59,7 +59,7 @@ const routes = [
   component: () => import('../views/UpdatePasswordView.vue'),
   meta: {
     title: 'Actualizar contraseña',
-    requiresAuth: true // 🔒 Necesitas la sesión del link para actualizar
+    requiresAuth: false // 🔒 Necesitas la sesión del link para actualizar
   }
 },
   {
