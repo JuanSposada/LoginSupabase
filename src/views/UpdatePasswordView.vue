@@ -123,7 +123,9 @@ async function handleUpdate() {
 
     // Si todo sale bien, mandamos al login
     alert('¡Tu contraseña ha sido actualizada!')
-    router.push('/login')
+    await supabase.auth.signOut()
+
+    router.replace('/login')
     
   } catch (error) {
     console.error(error)
